@@ -4,13 +4,11 @@ import IndexRoute from './routes/Index/IndexRoute'
 
 const App = () => {
   return (
-    <div className='container fixed inset-0'>
-      <HashRouter>
-        <Routes>
-          <Route path='/' element={<IndexRoute />} />
-        </Routes>
-      </HashRouter>
-    </div>
+    <HashRouter>
+      <Routes>
+        <Route path='/' element={<IndexRoute />} />
+      </Routes>
+    </HashRouter>
   )
 }
 

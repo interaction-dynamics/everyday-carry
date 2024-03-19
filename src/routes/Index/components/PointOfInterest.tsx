@@ -1,5 +1,7 @@
 import { createPortal } from 'react-dom'
-import { useState } from 'react'
+import { CSSTransition } from 'react-transition-group'
+
+import { useRef, useState } from 'react'
 import Card from './Card'
 import Pin from './Pin'
 import useEventListener from '../hooks/useEventListener'
@@ -7,35 +9,56 @@ import { eventName } from './Image'
 
 const MARGIN = 10
 
-export default function PointOfInterest({ title, description }) {
-  const [position, setPosition] = useState({ x: 0, y: 0 })
-  const [isVisible, setVisibility] = useState(false)
+export interface PointOfInterestProps {
+  title?: string
+  description?: string
+  x: number
+  y: number
+  link?: string | Record<string, string>
+}
 
-  const portalContainer = document.getElementById('card-content')
+export default function PointOfInterest({
+  title,
+  description,
+  x,
+  y,
+  link,
+}: PointOfInterestProps) {
+  const [isCardVisible, setCardVisibility] = useState(false)
 
-  const hideCard = () => {
-    setVisibility(false)
-  }
+  useEventListener(eventName, (event: CustomEvent) => {
+    if (event?.detail?.x !== x || event?.detail?.y !== y)
+      setCardVisibility(false)
+  })
 
-  useEventListener(eventName, hideCard)
-
-  const onPinClick = ({ x, y, width }) => {
-    if (isVisible) {
-      hideCard()
-    } else {
-      setPosition({ x: x + width + MARGIN, y })
-      setVisibility(true)
-    }
-  }
+  const nodeRef = useRef(null)
 
   return (
-    <>
-      <Pin x={500} y={500} onClick={onPinClick} />
-      {isVisible &&
-        createPortal(
-          <Card title={title} x={position.x} y={position.y} />,
-          portalContainer
-        )}
-    </>
+    <Pin
+      x={x}
+      y={y}
+      onClick={() => {
+        window.dispatchEvent(new CustomEvent(eventName, { detail: { x, y } }))
+        setCardVisibility(v => !v)
+      }}
+      className={'z-20'}
+    >
+      <CSSTransition
+        nodeRef={nodeRef}
+        in={isCardVisible}
+        appear
+        timeout={200}
+        classNames='alert'
+        unmountOnExit
+      >
+        <Card
+          ref={nodeRef}
+          title={title}
+          onClose={() => setCardVisibility(false)}
+          description={description}
+          link={link}
+        />
+      </CSSTransition>
+    </Pin>
   )
 }

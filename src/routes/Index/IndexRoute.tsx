@@ -1,13 +1,25 @@
+import { useRef, useState } from 'react'
 import Image from './components/Image'
-import Pin from './components/Pin'
-import PointOfInterest from './components/PointOfInterest'
+import Introduction from './components/Introduction'
+import { CSSTransition } from 'react-transition-group'
 
 export default function IndexRoute() {
+  const [introductionDisplayed, showIntroduction] = useState(true)
+
+  const nodeRef = useRef(null)
+
   return (
     <div className='absolute h-full w-full'>
-      <div className='absolute h-full w-full' id='card-content'></div>
       <Image>
-        <PointOfInterest title='MacBook Pro 16"' description='World' />
+        <CSSTransition
+          nodeRef={nodeRef}
+          in={introductionDisplayed}
+          timeout={1000}
+          classNames='fade'
+          unmountOnExit
+        >
+          <Introduction ref={nodeRef} onClose={() => showIntroduction(false)} />
+        </CSSTransition>
       </Image>
     </div>
   )
