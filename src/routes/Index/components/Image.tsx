@@ -124,31 +124,48 @@ export default function Image({ children }: ImageProps) {
 
   const [ratio, setRatio] = useState(1)
 
+  const [isCardVisible, setCardVisibility] = useState({})
+
+  const [cardHeight, setCardHeight] = useState(0)
+
   const computeWidth = () => {
     if (!container?.current) return
 
+    const { width: containerWidth, height } =
+      container.current.getBoundingClientRect()
+
+    const containerHeight = height
+
     const newSize =
-      window.innerHeight / window.innerWidth > HEIGHT / WIDTH
+      containerHeight / containerWidth > HEIGHT / WIDTH
         ? {
-            width: (window.innerHeight * WIDTH) / HEIGHT,
-            height: window.innerHeight,
+            width: (containerHeight * WIDTH) / HEIGHT,
+            height: containerHeight,
           }
         : {
-            width: window.innerWidth,
-            height: (window.innerWidth * HEIGHT) / WIDTH,
+            width: containerWidth,
+            height: (containerWidth * HEIGHT) / WIDTH,
           }
 
     setSize(newSize)
 
+    return {
+      containerHeight,
+      containerWidth,
+      newSize,
+    }
+  }
+
+  useLayoutEffect(() => {
+    const { containerHeight, containerWidth, newSize } = computeWidth()
+
     const scrollTo = {
-      top: Math.abs(window.innerHeight - newSize.height) / 2,
-      left: Math.abs(window.innerWidth - newSize.width) / 2,
+      top: Math.abs(containerHeight - newSize.height) / 2,
+      left: Math.abs(containerWidth - newSize.width) / 2,
     }
 
     container.current.scrollTo(scrollTo)
-  }
-
-  useLayoutEffect(computeWidth, [])
+  }, [])
 
   useEffect(() => {
     window.addEventListener('resize', computeWidth)
@@ -158,8 +175,31 @@ export default function Image({ children }: ImageProps) {
   const ratioX = width / WIDTH
   const ratioY = height / HEIGHT
 
+  const onShow =
+    (index: number) =>
+    (b: boolean, height: number = 0) => {
+      setCardVisibility({ ...isCardVisible, [index]: b })
+
+      const diff = height - cardHeight
+
+      setCardHeight(height)
+
+      if (height > 0) {
+        const { scrollLeft, scrollTop } = container.current
+
+        container.current.scrollTo({
+          top: scrollTop + diff / 2,
+          left: scrollLeft,
+        })
+      }
+    }
+
   return (
-    <div className='absolute h-full w-full overflow-scroll' ref={container}>
+    <div
+      className='absolute w-full overflow-scroll transition-all'
+      style={{ height: window.innerHeight - cardHeight }}
+      ref={container}
+    >
       <img
         src={wallpaper}
         className='absolute'
@@ -179,6 +219,7 @@ export default function Image({ children }: ImageProps) {
           title={pin.title}
           description={pin.description}
           link={pin.link ?? ''}
+          onShow={onShow(index)}
         />
       ))}
       {children}
